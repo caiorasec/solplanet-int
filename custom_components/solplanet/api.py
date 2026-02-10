@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import aiohttp
+
 
 class SolplanetApi:
     def __init__(self, token: str, apitoken: str, session: aiohttp.ClientSession):
-        self._token = token          # header token (curto)
-        self._apitoken = apitoken    # cookie apitoken (JWT)
+        self._token = token
+        self._apitoken = apitoken
         self._session = session
 
-    async def fetch_inverter(self, plant_id: str):
+    async def fetch_inverter(self, plant_id: str) -> dict:
         url = (
             "https://internation-cloud.solplanet.net/api/plant/invList"
             f"?current=1&pageSize=10&plantId={plant_id}"
@@ -25,8 +28,11 @@ class SolplanetApi:
             ctype = (resp.headers.get("Content-Type") or "").lower()
             text = await resp.text()
 
+            if resp.status != 200:
+                raise RuntimeError(f"Solplanet HTTP {resp.status}: {text[:250]}")
+
             if "application/json" not in ctype:
-                raise Exception(
+                raise RuntimeError(
                     f"Solplanet non-JSON ({resp.status}, {ctype}). Body: {text[:250]}"
                 )
 

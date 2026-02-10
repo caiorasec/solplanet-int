@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Solplanet",
+        "description": "Informe os dados da sua usina Solplanet.",
+        "data": {
+          "plant_id": "Plant ID",
+          "token": "Token",
+          "apitoken": "ApiToken"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Falha ao conectar com a API da Solplanet.",
+      "invalid_auth": "Token ou apitoken inválido.",
+      "unknown": "Erro inesperado."
+    },
+    "abort": {
+      "already_configured": "Esta usina já está configurada."
+    }
+  }
+}
