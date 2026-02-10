@@ -1,7 +1,7 @@
 {
   "domain": "solplanet",
   "name": "Solplanet Solar",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "documentation": "https://github.com/caiorasec/solplanet-int",
   "codeowners": [
     "@caiorasec"

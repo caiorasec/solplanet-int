@@ -33,7 +33,7 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             try:
                 data = await api.fetch_inverter(user_input[CONF_PLANT_ID])
                 if data.get("code") != 200:
-                    errors["base"] = "auth_failed"
+                    errors["base"] = "invalid_auth"
                 else:
                     await self.async_set_unique_id(user_input[CONF_PLANT_ID])
                     self._abort_if_unique_id_configured()
