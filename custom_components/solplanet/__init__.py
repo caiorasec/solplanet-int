@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import SolplanetApi
+from .api import SolplanetApi, SolplanetApiError, SolplanetAuthError
 from .const import (
     CONF_APITOKEN,
     CONF_PLANT_ID,
@@ -36,26 +36,26 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     runtime_status: dict[str, str] = {"status": STATUS_OK}
     cached_data: dict | None = None
 
-    async def _async_update_data():
+    async def _async_update_data() -> dict:
         nonlocal cached_data
         try:
             data = await api.fetch_inverter(plant_id)
             runtime_status["status"] = STATUS_OK
             cached_data = data
             return data
-        except Exception as err:
-            err_text = str(err).lower()
-            if "401" in err_text or "code 401" in err_text:
-                runtime_status["status"] = STATUS_AUTH_EXPIRED
-            else:
-                runtime_status["status"] = STATUS_CONNECTION_ERROR
-
+        except SolplanetAuthError as err:
+            runtime_status["status"] = STATUS_AUTH_EXPIRED
+            if cached_data is not None:
+                _LOGGER.warning("Solplanet authentication failed. Keeping last successful values.")
+                return cached_data
+            raise UpdateFailed(str(err)) from err
+        except SolplanetApiError as err:
+            runtime_status["status"] = STATUS_CONNECTION_ERROR
             if cached_data is not None:
                 _LOGGER.warning(
                     "Solplanet update failed (%s). Keeping last successful values.", err
                 )
                 return cached_data
-
             raise UpdateFailed(str(err)) from err
 
     coordinator = DataUpdateCoordinator(

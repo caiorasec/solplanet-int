@@ -21,6 +21,8 @@ from .const import (
     COORDINATOR,
     DOMAIN,
     RUNTIME_STATUS,
+    STATUS_AUTH_EXPIRED,
+    STATUS_CONNECTION_ERROR,
     STATUS_OK,
 )
 
@@ -116,7 +118,10 @@ class SolplanetSensor(SolplanetBaseEntity):
     @property
     def available(self) -> bool:
         if self.entity_description.state_class == SensorStateClass.MEASUREMENT:
-            return self._runtime_status.get("status") == STATUS_OK and self._inverter_data is not None
+            return (
+                self._runtime_status.get("status") == STATUS_OK
+                and self._inverter_data is not None
+            )
         return self._inverter_data is not None
 
     @property
@@ -145,6 +150,8 @@ class SolplanetSensor(SolplanetBaseEntity):
 class SolplanetApiStatusSensor(SolplanetBaseEntity):
     _attr_name = "Solplanet Status API"
     _attr_icon = "mdi:shield-check"
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [STATUS_OK, STATUS_AUTH_EXPIRED, STATUS_CONNECTION_ERROR, "unknown"]
 
     def __init__(
         self,

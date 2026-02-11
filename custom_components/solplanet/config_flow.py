@@ -4,7 +4,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .api import SolplanetApi
+from .api import SolplanetApi, SolplanetApiError, SolplanetAuthError
 from .const import CONF_APITOKEN, CONF_PLANT_ID, CONF_TOKEN, DOMAIN
 
 DATA_SCHEMA = vol.Schema(
@@ -31,14 +31,13 @@ class ConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             )
 
             try:
-                data = await api.fetch_inverter(user_input[CONF_PLANT_ID])
-                if data.get("code") != 200:
-                    errors["base"] = "invalid_auth"
-                else:
-                    await self.async_set_unique_id(user_input[CONF_PLANT_ID])
-                    self._abort_if_unique_id_configured()
-                    return self.async_create_entry(title="Solplanet", data=user_input)
-            except Exception:
+                await api.fetch_inverter(user_input[CONF_PLANT_ID])
+                await self.async_set_unique_id(user_input[CONF_PLANT_ID])
+                self._abort_if_unique_id_configured()
+                return self.async_create_entry(title="Solplanet", data=user_input)
+            except SolplanetAuthError:
+                errors["base"] = "invalid_auth"
+            except SolplanetApiError:
                 errors["base"] = "cannot_connect"
 
         return self.async_show_form(step_id="user", data_schema=DATA_SCHEMA, errors=errors)
