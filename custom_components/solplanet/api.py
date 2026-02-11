@@ -36,4 +36,9 @@ class SolplanetApi:
                     f"Solplanet non-JSON ({resp.status}, {ctype}). Body: {text[:250]}"
                 )
 
-            return await resp.json()
+            data = await resp.json()
+            code = data.get("code")
+            if code != 200:
+                raise RuntimeError(f"Solplanet API code {code}: {data}")
+
+            return data

@@ -7,3 +7,7 @@ CONF_TOKEN = "token"
 CONF_APITOKEN = "apitoken"
 
 COORDINATOR = "coordinator"
+RUNTIME_STATUS = "runtime_status"
+STATUS_OK = "ok"
+STATUS_AUTH_EXPIRED = "auth_expired"
+STATUS_CONNECTION_ERROR = "connection_error"

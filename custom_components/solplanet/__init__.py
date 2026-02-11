@@ -16,6 +16,10 @@ from .const import (
     COORDINATOR,
     DOMAIN,
     PLATFORMS,
+    RUNTIME_STATUS,
+    STATUS_AUTH_EXPIRED,
+    STATUS_CONNECTION_ERROR,
+    STATUS_OK,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -29,11 +33,29 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         session=session,
     )
     plant_id = entry.data[CONF_PLANT_ID]
+    runtime_status: dict[str, str] = {"status": STATUS_OK}
+    cached_data: dict | None = None
 
     async def _async_update_data():
+        nonlocal cached_data
         try:
-            return await api.fetch_inverter(plant_id)
+            data = await api.fetch_inverter(plant_id)
+            runtime_status["status"] = STATUS_OK
+            cached_data = data
+            return data
         except Exception as err:
+            err_text = str(err).lower()
+            if "401" in err_text or "code 401" in err_text:
+                runtime_status["status"] = STATUS_AUTH_EXPIRED
+            else:
+                runtime_status["status"] = STATUS_CONNECTION_ERROR
+
+            if cached_data is not None:
+                _LOGGER.warning(
+                    "Solplanet update failed (%s). Keeping last successful values.", err
+                )
+                return cached_data
+
             raise UpdateFailed(str(err)) from err
 
     coordinator = DataUpdateCoordinator(
@@ -48,6 +70,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         COORDINATOR: coordinator,
+        RUNTIME_STATUS: runtime_status,
     }
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)

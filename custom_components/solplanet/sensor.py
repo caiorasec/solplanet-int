@@ -16,7 +16,13 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity, DataUpdateCoordinator
 
-from .const import CONF_PLANT_ID, COORDINATOR, DOMAIN
+from .const import (
+    CONF_PLANT_ID,
+    COORDINATOR,
+    DOMAIN,
+    RUNTIME_STATUS,
+    STATUS_OK,
+)
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -57,15 +63,42 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinator: DataUpdateCoordinator = hass.data[DOMAIN][entry.entry_id][COORDINATOR]
+    data = hass.data[DOMAIN][entry.entry_id]
+    coordinator: DataUpdateCoordinator = data[COORDINATOR]
+    runtime_status: dict[str, str] = data[RUNTIME_STATUS]
 
-    async_add_entities(
-        SolplanetSensor(coordinator=coordinator, entry=entry, description=description)
+    entities: list[SensorEntity] = [
+        SolplanetSensor(
+            coordinator=coordinator,
+            entry=entry,
+            description=description,
+            runtime_status=runtime_status,
+        )
         for description in SENSOR_DESCRIPTIONS
+    ]
+    entities.append(
+        SolplanetApiStatusSensor(
+            coordinator=coordinator,
+            entry=entry,
+            runtime_status=runtime_status,
+        )
     )
 
+    async_add_entities(entities)
 
-class SolplanetSensor(CoordinatorEntity, SensorEntity):
+
+class SolplanetBaseEntity(CoordinatorEntity, SensorEntity):
+    def __init__(self, coordinator: DataUpdateCoordinator, entry: ConfigEntry) -> None:
+        super().__init__(coordinator)
+        self._plant_id = entry.data[CONF_PLANT_ID]
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, self._plant_id)},
+            manufacturer="Solplanet",
+            name=f"Solplanet Plant {self._plant_id}",
+        )
+
+
+class SolplanetSensor(SolplanetBaseEntity):
     entity_description: SolplanetSensorDescription
 
     def __init__(
@@ -73,16 +106,18 @@ class SolplanetSensor(CoordinatorEntity, SensorEntity):
         coordinator: DataUpdateCoordinator,
         entry: ConfigEntry,
         description: SolplanetSensorDescription,
+        runtime_status: dict[str, str],
     ) -> None:
-        super().__init__(coordinator)
+        super().__init__(coordinator, entry)
         self.entity_description = description
-        self._plant_id = entry.data[CONF_PLANT_ID]
+        self._runtime_status = runtime_status
         self._attr_unique_id = f"solplanet_{self._plant_id}_{description.key}"
-        self._attr_device_info = DeviceInfo(
-            identifiers={(DOMAIN, self._plant_id)},
-            manufacturer="Solplanet",
-            name=f"Solplanet Plant {self._plant_id}",
-        )
+
+    @property
+    def available(self) -> bool:
+        if self.entity_description.state_class == SensorStateClass.MEASUREMENT:
+            return self._runtime_status.get("status") == STATUS_OK and self._inverter_data is not None
+        return self._inverter_data is not None
 
     @property
     def native_value(self) -> int | float | None:
@@ -105,3 +140,22 @@ class SolplanetSensor(CoordinatorEntity, SensorEntity):
             return data["result"]["records"][0]["invList"][0]
         except (KeyError, IndexError, TypeError):
             return None
+
+
+class SolplanetApiStatusSensor(SolplanetBaseEntity):
+    _attr_name = "Solplanet Status API"
+    _attr_icon = "mdi:shield-check"
+
+    def __init__(
+        self,
+        coordinator: DataUpdateCoordinator,
+        entry: ConfigEntry,
+        runtime_status: dict[str, str],
+    ) -> None:
+        super().__init__(coordinator, entry)
+        self._runtime_status = runtime_status
+        self._attr_unique_id = f"solplanet_{self._plant_id}_api_status"
+
+    @property
+    def native_value(self) -> str:
+        return self._runtime_status.get("status", "unknown")
