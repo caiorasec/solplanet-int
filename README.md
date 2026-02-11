@@ -56,6 +56,40 @@ Fluxo comum:
    - Cookie `apitoken`
    - `plantId` da URL/query
 
+
+## Configuração no Dashboard de Energia ("Como preencher?")
+
+No menu **Configurações → Painéis → Energia**, use os sensores assim:
+
+### Painéis solares
+
+Clique em **Adicionar produção solar** e preencha:
+
+- **Energia produzida**: `sensor.solplanet_energia_total`
+  - deve ser `device_class: energy`
+  - deve ser acumulado (`state_class: total_increasing`)
+- **Potência (opcional, mas recomendado)**: `sensor.solplanet_potencia`
+
+> Use **Energia Total** para o Energy Dashboard. O sensor **Energia Hoje** é útil para cards diários, mas não é o ideal como fonte principal acumulada do dashboard.
+
+### Rede elétrica (se você tiver medidor da concessionária)
+
+A integração Solplanet normalmente não fornece importação/exportação da rede da casa. Para preencher esses campos, use sensores do seu medidor/smart meter:
+
+- **Consumo da rede**: sensor de energia importada da rede
+- **Retorno à rede**: sensor de energia exportada
+
+### O que esperar quando a API falha
+
+- **Potência** pode ficar indisponível se a API/autenticação estiver ruim (evita valor variável congelado).
+- **Energia total** tende a manter o último valor válido temporariamente.
+- Confira `sensor.solplanet_status_api`:
+  - `ok`
+  - `auth_expired`
+  - `connection_error`
+
+Se aparecer `auth_expired`, renove `token` e `apitoken`.
+
 ## Sensores e disponibilidade
 
 - **Potência (measurement)**: fica `indisponível` quando o status da API não é `ok`, para evitar valor variável “congelado”.
