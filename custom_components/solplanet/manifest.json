@@ -1,0 +1,12 @@
+{
+  "domain": "solplanet",
+  "name": "Solplanet Solar",
+  "version": "0.3.10",
+  "documentation": "https://github.com/caiorasec/solplanet-int",
+  "codeowners": [
+    "@caiorasec"
+  ],
+  "config_flow": true,
+  "iot_class": "cloud_polling",
+  "requirements": []
+}

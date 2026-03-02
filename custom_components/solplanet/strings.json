@@ -1,0 +1,82 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Solplanet",
+        "description": "Informe a usina e escolha o modo de conexão.",
+        "data": {
+          "plant_id": "Plant ID",
+          "connection_mode": "Modo de conexão (remote/local)"
+        }
+      },
+      "remote": {
+        "title": "Solplanet (Remoto)",
+        "description": "Informe as credenciais de acesso remoto.",
+        "data": {
+          "token": "Token",
+          "apitoken": "ApiToken"
+        }
+      },
+      "local": {
+        "title": "Solplanet (Local)",
+        "description": "Informe os dados da conexão local/proxy.",
+        "data": {
+          "local_host": "Host local/proxy ou URL completa (Balena)",
+          "local_port": "Porta local/proxy",
+          "local_use_https": "Usar HTTPS no modo local",
+          "local_basic_user": "Usuário Basic Auth (opcional)",
+          "local_basic_password": "Senha Basic Auth (opcional)",
+          "inverter_sn": "SN do inversor (opcional no modo local)",
+          "inverter_index": "Índice do inversor local (1-4)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Falha ao conectar com a API da Solplanet.",
+      "invalid_auth": "Token/apitoken inválido ou expirado (renove no portal, pois há captcha).",
+      "invalid_local_config": "Configuração local inválida: informe host e porta válidos.",
+      "unknown": "Erro inesperado."
+    },
+    "abort": {
+      "already_configured": "Esta usina já está configurada."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Solplanet",
+        "description": "Ajuste o modo de conexão da integração.",
+        "data": {
+          "connection_mode": "Modo de conexão (remote/local)"
+        }
+      },
+      "remote": {
+        "title": "Solplanet (Remoto)",
+        "description": "Ajuste as credenciais remotas.",
+        "data": {
+          "token": "Token",
+          "apitoken": "ApiToken"
+        }
+      },
+      "local": {
+        "title": "Solplanet (Local)",
+        "description": "Ajuste a conexão local/proxy.",
+        "data": {
+          "local_host": "Host local/proxy ou URL completa (Balena)",
+          "local_port": "Porta local/proxy",
+          "local_use_https": "Usar HTTPS no modo local",
+          "local_basic_user": "Usuário Basic Auth (opcional)",
+          "local_basic_password": "Senha Basic Auth (opcional)",
+          "inverter_sn": "SN do inversor (opcional no modo local)",
+          "inverter_index": "Índice do inversor local (1-4)"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Falha ao conectar com a API da Solplanet.",
+      "invalid_auth": "Token/apitoken inválido ou expirado (renove no portal, pois há captcha).",
+      "invalid_local_config": "Configuração local inválida: informe host e porta válidos.",
+      "unknown": "Erro inesperado."
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "Solplanet Solar",
+  "domains": ["sensor"],
+  "render_readme": true,
+  "homeassistant": "2024.1.0",
+  "zip_release": false
+}
