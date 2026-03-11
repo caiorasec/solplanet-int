@@ -14,6 +14,23 @@ class SolplanetAuthError(SolplanetApiError):
     """Raised when authentication is invalid or expired."""
 
 
+class SolplanetTargetUnavailableError(SolplanetApiError):
+    """Raised when the Balena proxy cannot find the inverter on the local network."""
+
+    def __init__(
+        self,
+        message: str,
+        *,
+        discovery_subnet: str | None = None,
+        discovery_port: str | None = None,
+        last_known_ip: str | None = None,
+    ) -> None:
+        super().__init__(message)
+        self.discovery_subnet = discovery_subnet
+        self.discovery_port = discovery_port
+        self.last_known_ip = last_known_ip
+
+
 class SolplanetApi:
     def __init__(
         self,
@@ -245,6 +262,13 @@ class SolplanetApi:
                 raise SolplanetApiError(f"Solplanet invalid JSON: {text[:250]}") from err
             if not isinstance(data, dict):
                 raise SolplanetApiError("Solplanet response is not a JSON object")
+            if data.get("status") == "unavailable":
+                raise SolplanetTargetUnavailableError(
+                    str(data.get("message") or "Solplanet target not found"),
+                    discovery_subnet=_optional_str(data.get("discovery_subnet")),
+                    discovery_port=_optional_str(data.get("discovery_port")),
+                    last_known_ip=_optional_str(data.get("last_known_ip")),
+                )
             return data
 
     async def _parse_json_response(self, resp: aiohttp.ClientResponse) -> dict[str, Any]:
@@ -306,6 +330,12 @@ def _to_float(value: Any) -> float:
 def _list_value(value: Any, index: int) -> Any:
     if isinstance(value, list) and len(value) > index:
         return value[index]
+    return None
+
+
+def _optional_str(value: Any) -> str | None:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
     return None
 
 

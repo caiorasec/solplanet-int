@@ -31,6 +31,7 @@ from .const import (
     STATUS_AUTH_EXPIRED,
     STATUS_CONNECTION_ERROR,
     STATUS_OK,
+    STATUS_TARGET_UNAVAILABLE,
 )
 
 
@@ -287,7 +288,13 @@ class SolplanetApiStatusSensor(SolplanetBaseEntity):
     _attr_name = "Solplanet Status API"
     _attr_icon = "mdi:shield-check"
     _attr_device_class = SensorDeviceClass.ENUM
-    _attr_options = [STATUS_OK, STATUS_AUTH_EXPIRED, STATUS_CONNECTION_ERROR, "unknown"]
+    _attr_options = [
+        STATUS_OK,
+        STATUS_AUTH_EXPIRED,
+        STATUS_CONNECTION_ERROR,
+        STATUS_TARGET_UNAVAILABLE,
+        "unknown",
+    ]
 
     def __init__(
         self,
@@ -302,3 +309,12 @@ class SolplanetApiStatusSensor(SolplanetBaseEntity):
     @property
     def native_value(self) -> str:
         return self._runtime_status.get("status", "unknown")
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        attrs: dict[str, Any] = {}
+        for key in ("message", "discovery_subnet", "discovery_port", "last_known_ip"):
+            value = self._runtime_status.get(key)
+            if value:
+                attrs[key] = value
+        return attrs or None

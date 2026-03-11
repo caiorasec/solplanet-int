@@ -204,6 +204,7 @@ Se aparecer `auth_expired`, renove `token` e `apitoken`.
 - **Potência (measurement)**: fica `indisponível` quando o status da API não é `ok`, para evitar valor variável “congelado”.
 - **Energia Hoje / Energia Total (contadores)**: podem manter último valor válido em falha temporária, evitando oscilações desnecessárias.
 - **Status API**: use esse sensor para monitorar rapidamente autenticação/conectividade.
+- Em modo `local` com proxy Balena, o status também pode virar `target_unavailable` quando o proxy não encontra mais o dongle no IP interno esperado. Nesse caso o sensor expõe atributos como `message`, `discovery_subnet`, `discovery_port` e `last_known_ip`.
 
 ## Troubleshooting
 
@@ -211,6 +212,7 @@ Se aparecer `auth_expired`, renove `token` e `apitoken`.
 - `cannot_connect`: falha de conectividade/endpoint indisponível (remoto ou local).
 - No modo `remote`, se os dados pararem após algum tempo, renove `token` e `apitoken`.
 - No modo `local`, valide `local_host`, rota do proxy, `inverter_sn`/`inverter_index` e Basic Auth (se habilitado).
+- Se o status virar `target_unavailable`, o proxy Balena não encontrou o dongle no IP interno atual. Verifique os atributos do sensor de status e atualize a descoberta/roteamento do proxy.
 
 ## Aviso Legal e Isenção de Responsabilidade
 

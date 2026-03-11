@@ -24,5 +24,6 @@ RUNTIME_STATUS = "runtime_status"
 STATUS_OK = "ok"
 STATUS_AUTH_EXPIRED = "auth_expired"
 STATUS_CONNECTION_ERROR = "connection_error"
+STATUS_TARGET_UNAVAILABLE = "target_unavailable"
 
 NOTIFICATION_ID_PREFIX = "solplanet_auth_"

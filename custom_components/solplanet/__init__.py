@@ -10,7 +10,12 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import SolplanetApi, SolplanetApiError, SolplanetAuthError
+from .api import (
+    SolplanetApi,
+    SolplanetApiError,
+    SolplanetAuthError,
+    SolplanetTargetUnavailableError,
+)
 from .const import (
     CONF_APITOKEN,
     CONF_CONNECTION_MODE,
@@ -36,6 +41,7 @@ from .const import (
     STATUS_AUTH_EXPIRED,
     STATUS_CONNECTION_ERROR,
     STATUS_OK,
+    STATUS_TARGET_UNAVAILABLE,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -59,7 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     plant_id = entry.data[CONF_PLANT_ID]
     notification_id = f"{NOTIFICATION_ID_PREFIX}{entry.entry_id}"
 
-    runtime_status: dict[str, str] = {"status": STATUS_OK}
+    runtime_status: dict[str, str | None] = {"status": STATUS_OK}
     cached_data: dict | None = None
     last_refresh_attempt: datetime | None = None
 
@@ -80,6 +86,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
         elif status == STATUS_OK and previous == STATUS_AUTH_EXPIRED:
             persistent_notification.async_dismiss(hass, notification_id)
+
+    def _set_target_unavailable_details(err: SolplanetTargetUnavailableError) -> None:
+        runtime_status["message"] = str(err)
+        runtime_status["discovery_subnet"] = err.discovery_subnet
+        runtime_status["discovery_port"] = err.discovery_port
+        runtime_status["last_known_ip"] = err.last_known_ip
+
+    def _clear_status_details() -> None:
+        runtime_status.pop("message", None)
+        runtime_status.pop("discovery_subnet", None)
+        runtime_status.pop("discovery_port", None)
+        runtime_status.pop("last_known_ip", None)
 
     async def _persist_refreshed_auth() -> None:
         if (
@@ -121,6 +139,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
         try:
             data = await api.fetch_inverter(plant_id)
+            _clear_status_details()
             _set_status(STATUS_OK)
             cached_data = data
             return data
@@ -140,7 +159,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 _LOGGER.warning("Solplanet authentication failed. Keeping last successful values.")
                 return cached_data
             raise UpdateFailed(str(err)) from err
+        except SolplanetTargetUnavailableError as err:
+            _set_target_unavailable_details(err)
+            _set_status(STATUS_TARGET_UNAVAILABLE)
+            if cached_data is not None:
+                _LOGGER.warning(
+                    "Solplanet local target unavailable (%s). Keeping last successful values.",
+                    err,
+                )
+                return cached_data
+            raise UpdateFailed(str(err)) from err
         except SolplanetApiError as err:
+            _clear_status_details()
             _set_status(STATUS_CONNECTION_ERROR)
             if cached_data is not None:
                 _LOGGER.warning(
